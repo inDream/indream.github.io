@@ -10,7 +10,7 @@ html, body { height: 100%; }
 
 <body>
 <div>
-
+<input id="upFile" type="file" style="display: block" accept="image/*" capture>
 <video id="live" width="720" height="1280" autoplay style="border:5px solid #000000; display:none;"> </video>
 <canvas id="canvas" style="border:5px solid #000000"> </canvas>
 </div>
@@ -37,6 +37,55 @@ Module.onRuntimeInitialized = async _ => {
 	const desiredWidth = Math.round(desiredHeight * 9 / 16); //720;
 	canvas.height = desiredHeight;
 	canvas.width = desiredWidth;
+	let ratio = 1;
+	
+	const upFile = document.getElementById('upFile');
+	upFile.addEventListener('change', (e) => {
+		console.log(upFile.files);
+		let files = e.target.files;
+		var reader = new FileReader();
+		reader.readAsArrayBuffer(files[0]);
+		reader.onload = async function() {
+			console.log(reader.result);
+			let blob = new Blob([new Uint8Array(reader.result)], {type: files[0].type });
+			let b = await createImageBitmap(blob);
+			const canvas2 = document.createElement('canvas');
+			const context = canvas2.getContext('2d');
+			canvas2.width = b.width;
+			canvas2.height = b.height;
+			context.drawImage(b, 0, 0);
+			let image = context.getImageData(0, 0, b.width, b.height);
+			
+			ratio = b.width / desiredWidth;
+			var oc = document.createElement('canvas'),
+				octx = oc.getContext('2d');
+			oc.width = b.width * 0.5;
+			oc.height = b.height * 0.5;
+			octx.drawImage(b, 0, 0, oc.width, oc.height);
+			// step 2
+			octx.drawImage(oc, 0, 0, oc.width * 0.5, oc.height * 0.5);
+			// step 3, resize to final size
+			ctx.drawImage(oc, 0, 0, oc.width * 0.5, oc.height * 0.5,
+			0, 0, canvas.width, canvas.height);
+
+			// convert the image data to grayscale 
+			const grayData = []
+			const d = image.data;
+			for (var i = 0, j = 0; i < d.length; i += 4, j++) {
+				grayData[j] = (d[i] * 66 + d[i + 1] * 129 + d[i + 2] * 25 + 4096) >> 8;
+			}
+
+			// put the data into the allocated buffer
+			const p = api.create_buffer(image.width, image.height);
+			Module.HEAP8.set(grayData, p);
+
+			// call the scanner function
+			api.scan_image(p, image.width, image.height)
+
+			// clean up (this is not really necessary in this example, but is used to demonstrate how you can manage Wasm heap memory from the js environment)
+			api.destroy_buffer(p);
+		};
+	});
 
 	// settings for the getUserMedia call
 	const constraints = {
@@ -96,15 +145,30 @@ Module.onRuntimeInitialized = async _ => {
 	}
 
 	function drawPoly(ctx, poly) {
-	// drawPoly expects a flat array of coordinates forming a polygon (e.g. [x1,y1,x2,y2,... etc])
+		// drawPoly expects a flat array of coordinates forming a polygon (e.g. [x1,y1,x2,y2,... etc])
 		ctx.beginPath();
-		ctx.moveTo(poly[0], poly[1]);
-		for (item = 2; item < poly.length - 1; item += 2) { ctx.lineTo(poly[item], poly[item + 1]) }
-
+		ctx.moveTo(poly[0]/ratio, poly[1]/ratio);
+		for (item = 2; item < poly.length - 1; item += 2) {
+			ctx.lineTo(poly[item]/ratio, poly[item + 1]/ratio);
+		}
 		ctx.lineWidth = 2;
 		ctx.strokeStyle = "#FF0000";
 		ctx.closePath();
 		ctx.stroke();
+	
+		/*ctx.beginPath();
+		ctx.moveTo(poly[0]/ratio, poly[1]/ratio);
+		for (item = 2; item < poly.length - 1; item += 2) {
+			ctx.lineTo(poly[item]/ratio, poly[item + 1]/ratio);
+			ctx.lineWidth = 5;
+			ctx.strokeStyle = "#FF0000";
+			ctx.closePath();
+			ctx.stroke();
+			ctx.moveTo(poly[item]/ratio, poly[item + 1]/ratio); // extra
+			ctx.beginPath();
+		}
+		ctx.closePath();
+		ctx.stroke();*/
 	}
 
 	function renderData(ctx, data, x, y) {
