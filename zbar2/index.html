@@ -34,7 +34,7 @@ Module.onRuntimeInitialized = async _ => {
 	const canvas = document.getElementById("canvas");
 	const ctx = canvas.getContext('2d');
 	const desiredHeight = document.body.clientHeight - 50; //1280;
-	const desiredWidth = Math.round(desiredWidth * 9 / 16); //720;
+	const desiredWidth = Math.round(desiredHeight * 9 / 16); //720;
 	canvas.height = desiredHeight;
 	canvas.width = desiredWidth;
 
