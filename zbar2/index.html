@@ -33,10 +33,10 @@ Module.onRuntimeInitialized = async _ => {
 	const video = document.getElementById("live");
 	const canvas = document.getElementById("canvas");
 	const ctx = canvas.getContext('2d');
-	const desiredWidth = document.body.clientHeight - 50; //1280;
-	const desiredHeight = Math.round(canvas.height * 9 / 16); //720;
-	canvas.height = desiredWidth;
-	canvas.width = desiredHeight;
+	const desiredHeight = document.body.clientHeight - 50; //1280;
+	const desiredWidth = Math.round(desiredWidth * 9 / 16); //720;
+	canvas.height = desiredHeight;
+	canvas.width = desiredWidth;
 
 	// settings for the getUserMedia call
 	const constraints = {
