@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>BarcodeReader</title>
+  <style>
+  html, body { height: 100%; } input { display: block; }
+  </style>
+</head>
+<body>
+  <div id="container"></div>
+  <script>const root = window;</script>
+  <script type="text/javascript" src="exif.js"></script>
+  <script type="text/javascript" src="DecoderWorker.js"></script>
+  <script type="text/javascript" src="BarcodeReader.js"></script>
+  <script type="text/javascript" src="jquery-3.5.1.min.js"></script>
+  <script type="text/javascript" src="barcode-reader.jquery.js"></script>
+  <script type="text/javascript">
+    BarcodeReader.DecodeMultiple();
+	BarcodeReader.SetDecodeFormats(['Code128']);
+	BarcodeReader.SetRotationSkip(true);
+	BarcodeReader.Config.ForceUnique = false;
+    $('#container').barcodeReader({ video: false });
+  </script>
+</body>
+</html>
